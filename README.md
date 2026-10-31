@@ -1,72 +1,57 @@
-# TeraHire — TeraSyncTech IT Recruitment Consultancy Demo
+# TeraHire — IT Recruitment & Consultancy Platform
 
-A responsive IT recruitment website starter built for GitHub Pages + Supabase.
+A responsive recruitment consultancy demo by TeraSyncTech. The project includes a public job board, Supabase authentication, and an administrator console for managing vacancies.
 
-## Included in this starter
-- Responsive public homepage and job discovery UI
-- Keyword, location and category filters
-- Sample IT vacancies for presentation
-- Job detail modal and save-job interaction (browser-session demo)
-- Supabase email/password sign-up and login wiring
-- Live published-job loading from Supabase
-- Application submission for authenticated users
-- Supabase SQL schema for candidates, recruiters, companies, jobs, applications and interviews
-- RLS policies and private resume storage bucket setup
+## Project files
 
-## Project structure
-```text
-terahire/
-├── index.html
-├── styles.css
-├── app.js
-├── config.js
-├── README.md
-└── supabase/
-    └── schema.sql
+- `index.html`, `styles.css`, `app.js` — public website and job listings
+- `admin.html`, `admin.css`, `admin.js` — secure admin sign-in and job management dashboard
+- `config.js` — Supabase project URL and publishable (anon) key
+- `supabase/schema.sql` — database tables, Row Level Security policies, resume bucket, and role protection
+
+## 1. Create and configure Supabase
+
+1. Create a Supabase project named **TeraHire**.
+2. Open **SQL Editor → New query**.
+3. Copy all contents of `supabase/schema.sql`, paste them, and run the script.
+4. Open **Project Settings → API** (or API Keys) and copy the Project URL and the **publishable key** (or legacy anon key).
+5. Open `config.js` and replace the two placeholders. Never put a `service_role` or secret key in this file.
+6. In Supabase **Authentication → URL Configuration**, set the Site URL to your GitHub Pages address, for example `https://terasynctech.github.io/terahire/`, and add that address to the allowed redirect URLs.
+
+## 2. Create the first administrator
+
+1. Open the deployed website and create an account using the normal **Create account** flow.
+2. Confirm the email if email confirmation is enabled.
+3. In Supabase, open **SQL Editor** and run this command after replacing the email with the exact admin email:
+
+```sql
+update public.profiles
+set role = 'admin'
+where id = (select id from auth.users where email = 'admin@example.com');
 ```
 
-## 1. Run a local preview
-Because the app uses JavaScript modules, serve the folder using a local web server. For example:
-```bash
-python -m http.server 8000
-```
-Then open `http://localhost:8000`.
+4. Open `https://terasynctech.github.io/terahire/admin.html` and sign in using that account.
+5. The dashboard checks the profile role in Supabase. Candidate/recruiter accounts cannot use the admin panel.
 
-## 2. Configure Supabase
-1. Create a new Supabase project for TeraHire.
-2. Open SQL Editor and run `supabase/schema.sql`.
-3. In Project Settings → API, copy the Project URL and publishable/anon key.
-4. Paste them into `config.js`.
-5. In Authentication → URL Configuration, add your GitHub Pages URL to Site URL / Redirect URLs.
-6. Enable email authentication and configure email confirmation as appropriate.
-7. Sign up using your own email, then promote that account to admin using the SQL statement at the bottom of `schema.sql`.
+Do not share the admin password or secret keys. Create separate accounts for other staff and grant access deliberately.
 
-**Never put the `service_role` key in `config.js`, GitHub, or browser code.** Only the publishable/anon key belongs in the frontend, with RLS enabled.
+## 3. Publish to GitHub Pages
 
-## 3. Publish on GitHub Pages
-1. Create a public repository named `terahire` under `terasynctech`.
-2. Upload the files and folders from this project.
-3. In repository Settings → Pages, choose Deploy from a branch.
-4. Select `main` and `/ (root)`, then Save.
-5. Your expected URL will be `https://terasynctech.github.io/terahire/`.
+1. Create a public repository named `terahire` in the TeraSyncTech GitHub account.
+2. Upload the extracted contents of this ZIP to the repository root (not the ZIP file itself).
+3. Commit the files. In **Settings → Pages**, select **Deploy from a branch**, choose `main` and `/ (root)`, then Save.
+4. Wait for GitHub Pages deployment. Open the public URL and test the website and `/admin.html`.
 
-## 4. Add the first live job
-After creating a recruiter account, the account role is `recruiter`. Use Supabase Table Editor or a secure recruiter dashboard (to be built in the next phase) to insert a job with:
-- `recruiter_id`: the recruiter's Auth user UUID
-- `title`, `company_name`, `location`, `description`
-- `status`: `published`
-- `category`, `skills`, `experience`, `salary`
+## 4. Daily job posting workflow
 
-The public homepage will load published jobs. The sample jobs are display-only and cannot receive real applications.
+1. Open the admin URL and sign in.
+2. Select **Add new job** and fill in title, company, location, job type, experience, salary, category, skills and description.
+3. Choose **Publish on website** and save. Choose **Save as draft** to keep a vacancy private, or **Closed / filled** when the role is no longer accepting applications.
+4. Use Edit, Publish/Unpublish, and Delete actions from the job list. Published vacancies load from Supabase on the public website; no GitHub edit is required for daily postings.
 
-## 5. Important current limitations
-This is Phase 1 — public website + backend foundation, not a complete production recruitment platform yet.
-- Candidate profile editor and resume upload UI are next.
-- Recruiter job-management dashboard is next.
-- Consultancy admin CRM, pipeline, interview scheduler and reports are next.
-- AI resume scoring/matching must be added through a server-side Edge Function or trusted API backend. Never expose an AI provider secret in frontend JavaScript.
-- Employer enquiry form is a visual preview only.
-- Sample job data is illustrative, not actual vacancies.
+## Important notes
 
-## Suggested next phase
-Build the authenticated candidate dashboard (profile, resume upload, saved jobs and application tracking), followed by the recruiter dashboard and consultancy admin CRM.
+- Sample jobs are display-only preview content. Once Supabase is configured, the public board shows database vacancies only, including an empty state if no vacancies have been published.
+- The admin dashboard is the first management phase. Candidate profile editing, resume upload, recruiter self-service, application pipeline, interview scheduling, email notifications, analytics and production hardening are future phases.
+- The schema uses Row Level Security. Review and test all policies, storage access and operational requirements before using real candidate data in production. Resume storage is private and currently owner-only; do not promise recruiter access to candidate resumes until a deliberate secure workflow is implemented.
+- This is a GitHub Pages static frontend. Never place Supabase service-role credentials or other secrets in browser files.
