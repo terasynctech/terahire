@@ -39,9 +39,111 @@ async function applyFor(j){
  if(error){toast(error.message.includes("foreign key")?"This is a sample listing. Add a live job before applying.":error.message);return}
  toast("Application submitted successfully.");closeModal()
 }
-function authModal(mode){const signup=mode==="signup";openModal(`<div class="eyebrow">TERAHIRE ACCOUNT</div><h2>${signup?"Create your account":"Welcome back"}</h2><p>${signup?"Join TeraHire and take the next step in your career.":"Log in to continue to your account."}</p><form id="authForm"><label>Email address</label><input id="authEmail" type="email" required placeholder="you@example.com"><label>Password</label><input id="authPassword" type="password" minlength="8" required placeholder="At least 8 characters">${signup?'<label>Account type</label><select id="authRole"><option value="candidate">Job seeker</option><option value="recruiter">Recruiter</option></select>':''}<button class="btn btn-primary" type="submit">${signup?"Create account":"Log in"}</button></form><p class="hint">${configured?"Supabase authentication is enabled.":"Demo preview only. Add Supabase settings to enable authentication."}</p>`);
- $("authForm").onsubmit=async e=>{e.preventDefault();if(!configured){toast("Add Supabase URL and anon key in config.js first.");return}const email=$("authEmail").value,password=$("authPassword").value;let result;if(signup){result=await supabase.auth.signUp({email,password,options:{data:{role:$("authRole").value}}})}else{result=await supabase.auth.signInWithPassword({email,password})}if(result.error){toast(result.error.message);return}toast(signup?"Check your email to confirm your account.":"Logged in successfully.");closeModal()};
+
+function authModal(mode) {
+  const signup = mode === "signup";
+
+  openModal(`
+    <div class="eyebrow">TERAHIRE ACCOUNT</div>
+    <h2>${signup ? "Candidate Registration" : "Welcome back"}</h2>
+    <p>${signup
+      ? "Create your account to find and apply for jobs."
+      : "Log in to continue to your account."}</p>
+
+    <form id="authForm">
+      ${signup ? `
+        <label>Full name</label>
+        <input id="authName" type="text"
+          required maxlength="100" placeholder="Enter your full name">
+
+        <label>Mobile number</label>
+        <input id="authPhone" type="tel"
+          required maxlength="20" placeholder="Enter your mobile number">
+      ` : ""}
+
+      <label>Email address</label>
+      <input id="authEmail" type="email"
+        required placeholder="you@example.com">
+
+      <label>Password</label>
+      <input id="authPassword" type="password"
+        minlength="8" required placeholder="At least 8 characters">
+
+      ${signup ? `
+        <label>Confirm password</label>
+        <input id="authConfirmPassword" type="password"
+          minlength="8" required placeholder="Re-enter password">
+      ` : ""}
+
+      <button class="btn btn-primary" type="submit">
+        ${signup ? "Register as Candidate" : "Log in"}
+      </button>
+    </form>
+
+    <p class="hint">
+      ${configured
+        ? "Secure account authentication is enabled."
+        : "Supabase configuration is required."}
+    </p>
+  `);
+
+  $("authForm").onsubmit = async e => {
+    e.preventDefault();
+
+    if (!configured) {
+      toast("Check Supabase settings in config.js.");
+      return;
+    }
+
+    const email = $("authEmail").value.trim();
+    const password = $("authPassword").value;
+
+    if (signup) {
+      const full_name = $("authName").value.trim();
+      const phone = $("authPhone").value.trim();
+      const confirmPassword = $("authConfirmPassword").value;
+
+      if (password !== confirmPassword) {
+        toast("Passwords do not match.");
+        return;
+      }
+
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name,
+            phone,
+            role: "candidate"
+          }
+        }
+      });
+
+      if (error) {
+        toast(error.message);
+        return;
+      }
+
+      toast("Registration submitted. Check your email if confirmation is required.");
+      closeModal();
+    } else {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) {
+        toast(error.message);
+        return;
+      }
+
+      toast("Logged in successfully.");
+      closeModal();
+    }
+  };
 }
+
 $("loginBtn").onclick=()=>authModal("login");$("signupBtn").onclick=()=>authModal("signup");
 $("employerBtn").onclick=()=>openModal(`<div class="eyebrow">EMPLOYER ENQUIRY</div><h2>Let's find your next hire.</h2><p>Share your hiring requirement and our consultancy team can follow up.</p><form id="enquiryForm"><label>Company name</label><input required placeholder="Your company"><label>Work email</label><input required type="email" placeholder="name@company.com"><label>Hiring requirement</label><textarea rows="3" placeholder="Role, skills and number of openings"></textarea><button class="btn btn-primary">Send enquiry</button></form><p class="hint">Enquiry form is a UI preview. Connect a secure backend before collecting real enquiries.</p>`);$("modalContent").addEventListener("submit",e=>{if(e.target.id==="enquiryForm"){e.preventDefault();toast("Preview only — connect the enquiry backend to receive submissions.");closeModal()}});
 $("menuBtn").onclick=()=>document.querySelector(".topbar nav").classList.toggle("open");
