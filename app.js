@@ -102,7 +102,10 @@ function authModal(mode) {
       const full_name = $("authName").value.trim();
       const phone = $("authPhone").value.trim();
       const confirmPassword = $("authConfirmPassword").value;
-
+if (!full_name || !phone) {
+  toast("Please enter your full name and mobile number.");
+  return;
+}
       if (password !== confirmPassword) {
         toast("Passwords do not match.");
         return;
