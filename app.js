@@ -111,17 +111,19 @@ if (!full_name || !phone) {
         return;
       }
 
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name,
-            phone,
-            role: "candidate"
-          }
-        }
-      });
+     
+const { error } = await supabase.auth.signUp({
+  email,
+  password,
+  options: {
+    emailRedirectTo: "https://terasynctech.github.io/terahire/",
+    data: {
+      full_name,
+      phone,
+      role: "candidate"
+    }
+  }
+});
 
       if (error) {
         toast(error.message);
